@@ -9,7 +9,7 @@
     
     <title>
         
-            Hexo+Github+Netlify博客搭建教程 友情链接+踩坑注意事项 |
+            Disruptor 与其他无锁队列相比的优势 |
         
         WUHU233&#39;s Blog
     </title>
@@ -227,7 +227,7 @@
             <div class="post-content-bottom border-box">
                 
                     <div class="post-title">
-                        Hexo+Github+Netlify博客搭建教程 友情链接+踩坑注意事项
+                        Disruptor 与其他无锁队列相比的优势
                     </div>
                 
 
@@ -255,13 +255,13 @@
         
             <span class="meta-info-item post-create-date">
                 <i class="icon fa-solid fa-calendar-plus"></i>&nbsp;
-                <span class="datetime">2025-01-18 16:03:25</span>
+                <span class="datetime">2025-03-08 16:16:14</span>
             </span>
 
             
                 <span class="meta-info-item post-update-date">
                     <i class="icon fa-solid fa-file-pen"></i>&nbsp;
-                    <span class="datetime" data-updated="Sat Jan 18 2025 16:55:13 GMT+0800">2025-01-18 16:55:13</span>
+                    <span class="datetime" data-updated="Sat Mar 08 2025 16:16:14 GMT+0800">2025-03-08 16:16:14</span>
                 </span>
             
         
@@ -272,7 +272,7 @@
             <span class="post-tag meta-info-item border-box">
                 <ul class="post-tag-ul">
                     
-                            <li class="tag-item"><span class="tag-separator"><i class="icon fas fa-hashtag"></i></span><a href="/tags/Hexo-Github-Github/">Hexo Github Github</a></li>
+                            <li class="tag-item"><span class="tag-separator"><i class="icon fas fa-hashtag"></i></span><a href="/tags/java/">java</a></li>
                         
                     
                 </ul>
@@ -309,103 +309,89 @@
                     
 
                     
-                         <hr>
-<h3 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h3><p>最近在编程导航上看到了<a class="link"   target="_blank" rel="noopener" href="https://www.codefather.cn/post/1770761014644662274#heading-0" >这篇博客搭建指南<i class="fas fa-external-link-alt"></i></a>。于是着手操作从零开始搭建了一个自己的 Hexo 博客。在过程中，大部分步骤比较顺利，但也踩了一些坑。为了帮助有同样需求的朋友少走弯路，我记录了自己的经验、工具选择以及注意事项，希望对你·有所帮助。</p>
+                         <h1 id="Disruptor-与其他无锁队列相比的优势"><a href="#Disruptor-与其他无锁队列相比的优势" class="headerlink" title="Disruptor 与其他无锁队列相比的优势"></a>Disruptor 与其他无锁队列相比的优势</h1><p>大家好,今天我想和大家分享一下我在学习高性能并发编程过程中对 <strong>Disruptor</strong> 的一些理解，尤其是它相较于其他常见的无锁队列（如 Java 中的 <code>ConcurrentLinkedQueue</code> 或 <code>LinkedBlockingQueue</code>）有哪些优势。</p>
+<p>在多线程环境下，如何高效、安全地进行数据传递是一个核心问题。为了实现这一点，很多语言和框架都提供了各种类型的队列结构。而 <strong>无锁队列（Lock-Free Queue）</strong> 因为其无需使用传统锁机制，在高并发场景下具有更好的性能表现，受到了越来越多开发者的关注。</p>
 <hr>
-<h3 id="1-使用-NVM-管理-Node-js-版本"><a href="#1-使用-NVM-管理-Node-js-版本" class="headerlink" title="1. 使用 NVM 管理 Node.js 版本"></a>1. 使用 NVM 管理 Node.js 版本</h3><p>在实际项目开发中，Node.js 是不可或缺的工具。为了便于管理多个版本的 Node.js，我推荐使用 **NVM (Node Version Manager)**。它可以快速安装和切换 Node.js 的版本，极大地方便了开发环境的配置。</p>
-<p>参考教程：<a class="link"   target="_blank" rel="noopener" href="https://blog.csdn.net/weixin_57844432/article/details/127788884" >NVM 安装与使用指南<i class="fas fa-external-link-alt"></i></a>。</p>
-<hr>
-<h3 id="2-Git-Bash-网络代理问题"><a href="#2-Git-Bash-网络代理问题" class="headerlink" title="2. Git Bash 网络代理问题"></a>2. Git Bash 网络代理问题</h3><p>使用 <strong>Git Bash</strong> 执行 Git 命令时，可能会遇到网络代理的问题，尤其是在访问 GitHub 时连接速度很慢甚至无法连接。</p>
-<p>解决方案：</p>
+<h2 id="一、常见无锁队列简介"><a href="#一、常见无锁队列简介" class="headerlink" title="一、常见无锁队列简介"></a>一、常见无锁队列简介</h2><p>在进入正题之前，我们先简单回顾一下 Java 中几个常见的无锁或低锁竞争的队列：</p>
 <ul>
-<li>配置代理地址。</li>
-<li>参考这篇博客：<a class="link"   target="_blank" rel="noopener" href="https://jjayyyyyyy.github.io/2019/08/11/git_bash_proxy.html" >Git Bash 网络代理配置<i class="fas fa-external-link-alt"></i></a>。</li>
+<li><strong>ConcurrentLinkedQueue</strong>：一个基于链表结构的无界无锁队列，适用于生产者-消费者模型。</li>
+<li><strong>LinkedBlockingQueue</strong>：虽然内部有锁，但通过分离读写锁来降低竞争，性能较好。</li>
+<li><strong>SynchronousQueue</strong>：不存储元素的队列，直接传递数据，适合高并发任务调度。</li>
+<li><strong>ArrayBlockingQueue</strong>：有界阻塞队列，使用 ReentrantLock 控制访问。</li>
 </ul>
+<p>这些队列各有优劣，但在某些极端高并发的场景下，它们可能无法满足我们对吞吐量和延迟的极致追求。</p>
 <hr>
-<h3 id="3-个人域名购买与解析"><a href="#3-个人域名购买与解析" class="headerlink" title="3. 个人域名购买与解析"></a>3. 个人域名购买与解析</h3><p>个人域名的购买非常简单：</p>
-<ol>
-<li><p>访问域名服务商网站（如阿里云）。</p>
-</li>
-<li><p>搜索你喜欢的域名，挑选性价比高的直接购买。</p>
-</li>
-<li><p>购买后，进入解析设置，添加两条解析记录即可完成域名绑定。</p>
-<p>记得一定要添加CNAME文件，每一次提交代码之后GitHub里面的CNAME文件都会被清除。想要持久化保存的话必须要在本地文件夹的source文件夹内添加CNAME文件，先就用记事本，然后把.txt后缀删掉就行，里面是你自己的网站比如wuhu233.site，CNAME不用后缀，把后缀去掉</p>
-</li>
-</ol>
-<p><strong>参考</strong>：<a class="link"   target="_blank" rel="noopener" href="https://wanwang.aliyun.com/domain/" >阿里云域名购买指南<i class="fas fa-external-link-alt"></i></a></p>
+<h2 id="二、Disruptor-的设计哲学"><a href="#二、Disruptor-的设计哲学" class="headerlink" title="二、Disruptor 的设计哲学"></a>二、Disruptor 的设计哲学</h2><p>Disruptor 是由英国金融公司 LMAX 开发的一种高性能事件处理框架，其底层采用了一个叫做 <strong>环形缓冲区（Ring Buffer）</strong> 的结构。这个结构不同于传统的链表或数组队列，它是固定大小、预分配内存的，并且通过一系列巧妙的设计避免了锁的使用。</p>
+<p>Disruptor 的目标很明确：<strong>以最低的延迟、最高的吞吐量完成线程间通信</strong>。</p>
 <hr>
-<h3 id="4-Hexo-初始化时的命名问题"><a href="#4-Hexo-初始化时的命名问题" class="headerlink" title="4. Hexo 初始化时的命名问题"></a>4. Hexo 初始化时的命名问题</h3><p>运行 <code>hexo init</code> 时，一定要在命令后面跟上项目名称。例如：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">hexo init my-blog</span><br></pre></td></tr></table></figure>
-
-<p>如果不指定名称，可能会导致初始化失败或报错。</p>
-<h3 id="5-Hexo-主题配置"><a href="#5-Hexo-主题配置" class="headerlink" title="5. Hexo 主题配置"></a>5. Hexo 主题配置</h3><p>Hexo 提供了丰富的主题供用户选择，主题配置是博客个性化的重要部分。以下是使用主题的步骤：</p>
-<ol>
-<li><p><strong>查找主题</strong><br>访问 <a class="link"   target="_blank" rel="noopener" href="https://hexo.io/themes/" >Hexo Themes 官方页面<i class="fas fa-external-link-alt"></i></a> 或者 GitHub 搜索自己喜欢的主题。</p>
-</li>
-<li><p><strong>安装主题</strong><br>进入博客目录的 <code>themes</code> 文件夹，运行以下命令安装主题：</p>
-<figure class="highlight sh"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/iissnan/hexo-theme-next themes/next</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>修改配置</strong><br>打开博客根目录下的 <code>_config.yml</code> 文件，找到 <code>theme</code> 参数，将其修改为安装的主题名称，例如：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">theme: next</span><br></pre></td></tr></table></figure>
-</li>
-<li><p><strong>阅读主题文档</strong><br>每个主题都会附带详细的文档，建议认真阅读文档了解主题的功能和个性化设置。</p>
-</li>
-</ol>
-<blockquote>
-<p><strong>提示</strong>：<br>如果不需要特别的个性化定制，只需调整 <code>_config.yml</code> 文件中的基础配置即可，节省时间和精力。</p>
-</blockquote>
+<h2 id="三、Disruptor-相比其他无锁队列的核心优势"><a href="#三、Disruptor-相比其他无锁队列的核心优势" class="headerlink" title="三、Disruptor 相比其他无锁队列的核心优势"></a>三、Disruptor 相比其他无锁队列的核心优势</h2><p>接下来我们重点来看看 Disruptor 在哪些方面做得更好。</p>
+<h3 id="1-真正的无锁设计"><a href="#1-真正的无锁设计" class="headerlink" title="1. 真正的无锁设计"></a>1. <strong>真正的无锁设计</strong></h3><p>Disruptor 使用的是 <strong>CAS（Compare and Swap）+ volatile 变量</strong> 的方式来实现线程同步，而不是依赖传统的互斥锁或者重入锁。</p>
+<p>相比之下，像 <code>ConcurrentLinkedQueue</code> 虽然是无锁的，但在多线程同时操作时仍需频繁进行 CAS 操作，容易造成“自旋”浪费 CPU 时间。而 Disruptor 通过 Sequence 追踪机制和 Barrier 协调器，使得多个消费者之间能够高效协作，避免不必要的冲突。</p>
+<h3 id="2-预分配内存-环形缓冲区"><a href="#2-预分配内存-环形缓冲区" class="headerlink" title="2. 预分配内存 + 环形缓冲区"></a>2. <strong>预分配内存 + 环形缓冲区</strong></h3><p>Disruptor 的 Ring Buffer 在初始化时就将所有空间分配完毕，避免了运行时动态扩容带来的 GC 压力。这对于需要长时间运行的系统来说是非常重要的优化手段。</p>
+<p>而像 <code>ConcurrentLinkedQueue</code> 是基于链表实现的，每次添加元素都需要新建节点对象，频繁创建和回收对象会增加 JVM 的垃圾回收压力。</p>
+<h3 id="3-顺序访问-缓存友好"><a href="#3-顺序访问-缓存友好" class="headerlink" title="3. 顺序访问 + 缓存友好"></a>3. <strong>顺序访问 + 缓存友好</strong></h3><p>Disruptor 的 Ring Buffer 是一块连续的内存区域，CPU 缓存命中率高，访问效率远高于链表结构。</p>
+<p>Java 的 <code>ConcurrentLinkedQueue</code> 由于是链表结构，节点分布在内存的不同位置，容易导致缓存不命中，影响性能。</p>
+<h3 id="4-支持多消费者并行消费"><a href="#4-支持多消费者并行消费" class="headerlink" title="4. 支持多消费者并行消费"></a>4. <strong>支持多消费者并行消费</strong></h3><p>Disruptor 支持多个消费者并行消费同一个事件流，并且可以配置消费者之间的依赖关系（例如 A 处理完后 B 才能处理），这种灵活的拓扑结构非常适合复杂业务场景下的流水线式处理。</p>
+<p>相比之下，普通的队列通常只能做到单一消费者或简单的并行处理，缺乏这种精细的控制能力。</p>
+<h3 id="5-更高的吞吐量与更低的延迟"><a href="#5-更高的吞吐量与更低的延迟" class="headerlink" title="5. 更高的吞吐量与更低的延迟"></a>5. <strong>更高的吞吐量与更低的延迟</strong></h3><p>根据官方测试数据，Disruptor 在单机环境下可以轻松达到每秒百万级的消息处理能力，而平均延迟可以控制在纳秒级别。</p>
+<p>这在金融交易、高频日志处理、实时监控等对性能要求极高的场景中，Disruptor 的优势尤为明显。</p>
 <hr>
-<h3 id="6-关于-Netlify-的使用体验-不推荐使用"><a href="#6-关于-Netlify-的使用体验-不推荐使用" class="headerlink" title="6. 关于 Netlify 的使用体验(不推荐使用)"></a>6. 关于 Netlify 的使用体验(不推荐使用)</h3><p>Netlify 是一款优秀的静态网站托管工具，可以实现自动化部署和免费的 HTTPS 支持。然而，对于数据量较小的个人博客，手动部署往往更加高效。</p>
-<h4 id="手动部署步骤"><a href="#手动部署步骤" class="headerlink" title="手动部署步骤"></a>手动部署步骤</h4><ol>
-<li><p>在本地完成 Markdown 文件的编辑后，执行以下命令：</p>
-<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">hexo clean</span><br><span class="line">hexo generate</span><br><span class="line">hexo deploy</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li><code>hexo clean</code>：清理旧的生成文件。</li>
-<li><code>hexo generate</code>：生成新的静态页面。</li>
-<li><code>hexo deploy</code>：将静态页面上传到 GitHub 仓库。</li>
-</ul>
-</li>
-<li><p>提交静态文件到 GitHub 后，即可通过 GitHub Pages 访问你的博客。</p>
-</li>
-</ol>
-<h4 id="Netlify-的优缺点"><a href="#Netlify-的优缺点" class="headerlink" title="Netlify 的优缺点"></a>Netlify 的优缺点</h4><ul>
-<li><strong>优点</strong>：<ul>
-<li>自动化构建和部署，操作简单。</li>
-<li>免费提供 SSL 证书，支持 HTTPS。</li>
-<li>支持定制化域名配置。</li>
-</ul>
-</li>
-<li><strong>缺点</strong>：<ul>
-<li>国内访问速度较慢。</li>
-<li>对于更新频率较低的小型博客，功能显得多余。</li>
-</ul>
-</li>
-</ul>
-<blockquote>
-<p><strong>建议</strong>：<br>如果你的博客更新频繁且需要简化部署流程，推荐使用 Netlify 的自动化功能；否则手动部署更适合日常使用。</p>
-</blockquote>
+<h2 id="四、适用场景对比总结"><a href="#四、适用场景对比总结" class="headerlink" title="四、适用场景对比总结"></a>四、适用场景对比总结</h2><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>Disruptor</th>
+<th>ConcurrentLinkedQueue</th>
+<th>LinkedBlockingQueue</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>是否无锁</td>
+<td>✅ 完全无锁</td>
+<td>✅ 部分无锁</td>
+<td>❌ 有锁</td>
+</tr>
+<tr>
+<td>内存分配方式</td>
+<td>✅ 预分配</td>
+<td>❌ 动态分配</td>
+<td>❌ 动态分配</td>
+</tr>
+<tr>
+<td>数据结构</td>
+<td>✅ 环形缓冲区</td>
+<td>✅ 链表</td>
+<td>✅ 数组</td>
+</tr>
+<tr>
+<td>吞吐量</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐⭐</td>
+</tr>
+<tr>
+<td>延迟</td>
+<td>⭐⭐⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+<td>⭐⭐⭐</td>
+</tr>
+<tr>
+<td>多消费者支持</td>
+<td>✅ 强大支持</td>
+<td>❌ 有限支持</td>
+<td>❌ 较弱</td>
+</tr>
+<tr>
+<td>适用场景</td>
+<td>高频交易、日志系统</td>
+<td>一般并发任务</td>
+<td>中等并发任务</td>
+</tr>
+</tbody></table>
 <hr>
-<h3 id="7-阅读官方文档的重要性"><a href="#7-阅读官方文档的重要性" class="headerlink" title="7. 阅读官方文档的重要性"></a>7. 阅读官方文档的重要性</h3><p><strong>阅读官方文档</strong> 是掌握 Hexo 和其他技术的关键。官方文档通常提供以下内容：</p>
-<ul>
-<li><strong>快速入门</strong>：如何快速搭建基础框架。</li>
-<li><strong>配置说明</strong>：详解配置文件的参数及其用途。</li>
-<li><strong>个性化功能</strong>：指导用户如何调整样式、功能和插件。</li>
-</ul>
-<h4 id="官方文档阅读建议"><a href="#官方文档阅读建议" class="headerlink" title="官方文档阅读建议"></a>官方文档阅读建议</h4><ol>
-<li><strong>充分利用翻译工具</strong><br>如果官方文档没有中文版本，可以使用 <a class="link"   target="_blank" rel="noopener" href="https://immersivetranslate.com/zh-Hans/" >沉浸式翻译插件<i class="fas fa-external-link-alt"></i></a>，支持快捷翻译整个页面。常用快捷键：<ul>
-<li><code>Ctrl+A</code>：一键翻译。</li>
-</ul>
-</li>
-<li><strong>多动手实践</strong><br>仔细阅读 <code>_config.yml</code> 和主题的配置文件，结合文档进行调整，能够快速熟悉 Hexo 的工作原理。</li>
-</ol>
-<blockquote>
-<p><strong>提示</strong>：<br>搭建博客的过程不仅是技术上的学习，更是对内容表达和个性化创作的一次探索。</p>
-<p><strong>总结经验：</strong></p>
-<p>使用合适的工具：如 NVM、Git Bash 和翻译插件。</p>
-<p>多读文档：官方文档和主题文档是最可靠的参考资料。</p>
-<p>量力而行：根据实际需求选择功能，避免过度定制。</p>
-</blockquote>
+<h2 id="五、小结"><a href="#五、小结" class="headerlink" title="五、小结"></a>五、小结</h2><p>总的来说，Disruptor 并不是为了替代所有的队列结构而存在的，而是针对那些对性能、延迟、吞吐量有极高要求的场景提供了一种更优的解决方案。</p>
+<p>如果你正在开发一个高并发系统，比如实时消息中间件、日志采集平台、金融交易引擎等，那么 Disruptor 是非常值得深入研究和使用的工具。</p>
+<p>当然，它的学习曲线也相对陡峭一些，需要你对并发编程、内存模型、CPU 缓存等基础知识有一定了解。但对于每一个希望写出高性能代码的开发者来说，Disruptor 都是一块不可多得的技术瑰宝</p>
 
                     
                 </div>
@@ -418,7 +404,7 @@
                             <ul class="post-tags-box border-box">
                                 
                                     <li class="tag-item border-box">
-                                        <i class="icon fas fa-hashtag"></i>&nbsp;<a href="/tags/Hexo-Github-Github/">Hexo Github Github</a>
+                                        <i class="icon fas fa-hashtag"></i>&nbsp;<a href="/tags/java/">java</a>
                                     </li>
                                 
                             </ul>
@@ -460,14 +446,14 @@
                             <div class="prev-post">
                                 <a class="prev"
                                    rel="prev"
-                                   href="/2025/01/20/d6d47bcc10b2/"
-                                   title="网站更新搭建日志"
+                                   href="/2025/03/08/9cd65bb14d3f/"
+                                   title="Disruptor 如何处理环形缓冲区溢出问题"
                                 >
                                     <span class="left arrow-icon flex-center">
                                         <i class="fas fa-chevron-left"></i>
                                     </span>
                                     <span class="title flex-center">
-                                        <span class="post-nav-title-item text-ellipsis">网站更新搭建日志</span>
+                                        <span class="post-nav-title-item text-ellipsis">Disruptor 如何处理环形缓冲区溢出问题</span>
                                         <span class="post-nav-item">上一篇</span>
                                     </span>
                                 </a>
@@ -477,11 +463,11 @@
                             <div class="next-post">
                                 <a class="next"
                                    rel="next"
-                                   href="/2025/01/18/0025f1e86c2e/"
-                                   title="first log"
+                                   href="/2025/03/08/0d2323b99b71/"
+                                   title="Disruptor 无锁队列：并发世界的“高效沟通大师”"
                                 >
                                     <span class="title flex-center">
-                                        <span class="post-nav-title-item text-ellipsis">first log</span>
+                                        <span class="post-nav-title-item text-ellipsis">Disruptor 无锁队列：并发世界的“高效沟通大师”</span>
                                         <span class="post-nav-item">下一篇</span>
                                     </span>
                                     <span class="right arrow-icon flex-center">
@@ -591,7 +577,7 @@
             <div class="pc-post-toc right-toc">
                 <div class="post-toc-wrap border-box">
     <div class="post-toc border-box">
-        <ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8-NVM-%E7%AE%A1%E7%90%86-Node-js-%E7%89%88%E6%9C%AC"><span class="nav-text">1. 使用 NVM 管理 Node.js 版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Git-Bash-%E7%BD%91%E7%BB%9C%E4%BB%A3%E7%90%86%E9%97%AE%E9%A2%98"><span class="nav-text">2. Git Bash 网络代理问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%AA%E4%BA%BA%E5%9F%9F%E5%90%8D%E8%B4%AD%E4%B9%B0%E4%B8%8E%E8%A7%A3%E6%9E%90"><span class="nav-text">3. 个人域名购买与解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Hexo-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%97%B6%E7%9A%84%E5%91%BD%E5%90%8D%E9%97%AE%E9%A2%98"><span class="nav-text">4. Hexo 初始化时的命名问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Hexo-%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE"><span class="nav-text">5. Hexo 主题配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%85%B3%E4%BA%8E-Netlify-%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C-%E4%B8%8D%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8"><span class="nav-text">6. 关于 Netlify 的使用体验(不推荐使用)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E9%83%A8%E7%BD%B2%E6%AD%A5%E9%AA%A4"><span class="nav-text">手动部署步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Netlify-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-text">Netlify 的优缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E9%98%85%E8%AF%BB%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-text">7. 阅读官方文档的重要性</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E9%98%85%E8%AF%BB%E5%BB%BA%E8%AE%AE"><span class="nav-text">官方文档阅读建议</span></a></li></ol></li></ol>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Disruptor-%E4%B8%8E%E5%85%B6%E4%BB%96%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%9B%B8%E6%AF%94%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-text">Disruptor 与其他无锁队列相比的优势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%B8%B8%E8%A7%81%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%80%E4%BB%8B"><span class="nav-text">一、常见无锁队列简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Disruptor-%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%93%B2%E5%AD%A6"><span class="nav-text">二、Disruptor 的设计哲学</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Disruptor-%E7%9B%B8%E6%AF%94%E5%85%B6%E4%BB%96%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="nav-text">三、Disruptor 相比其他无锁队列的核心优势</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%97%A0%E9%94%81%E8%AE%BE%E8%AE%A1"><span class="nav-text">1. 真正的无锁设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%A2%84%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98-%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="nav-text">2. 预分配内存 + 环形缓冲区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E9%A1%BA%E5%BA%8F%E8%AE%BF%E9%97%AE-%E7%BC%93%E5%AD%98%E5%8F%8B%E5%A5%BD"><span class="nav-text">3. 顺序访问 + 缓存友好</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%94%AF%E6%8C%81%E5%A4%9A%E6%B6%88%E8%B4%B9%E8%80%85%E5%B9%B6%E8%A1%8C%E6%B6%88%E8%B4%B9"><span class="nav-text">4. 支持多消费者并行消费</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%9B%B4%E9%AB%98%E7%9A%84%E5%90%9E%E5%90%90%E9%87%8F%E4%B8%8E%E6%9B%B4%E4%BD%8E%E7%9A%84%E5%BB%B6%E8%BF%9F"><span class="nav-text">5. 更高的吞吐量与更低的延迟</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E5%AF%B9%E6%AF%94%E6%80%BB%E7%BB%93"><span class="nav-text">四、适用场景对比总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%B0%8F%E7%BB%93"><span class="nav-text">五、小结</span></a></li></ol></li></ol>
     </div>
 </div>
 
@@ -794,7 +780,7 @@
             <div class="tablet-post-toc">
                 <div class="post-toc-wrap border-box">
     <div class="post-toc border-box">
-        <ol class="nav"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%89%8D%E8%A8%80"><span class="nav-text">前言</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E4%BD%BF%E7%94%A8-NVM-%E7%AE%A1%E7%90%86-Node-js-%E7%89%88%E6%9C%AC"><span class="nav-text">1. 使用 NVM 管理 Node.js 版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-Git-Bash-%E7%BD%91%E7%BB%9C%E4%BB%A3%E7%90%86%E9%97%AE%E9%A2%98"><span class="nav-text">2. Git Bash 网络代理问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E4%B8%AA%E4%BA%BA%E5%9F%9F%E5%90%8D%E8%B4%AD%E4%B9%B0%E4%B8%8E%E8%A7%A3%E6%9E%90"><span class="nav-text">3. 个人域名购买与解析</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-Hexo-%E5%88%9D%E5%A7%8B%E5%8C%96%E6%97%B6%E7%9A%84%E5%91%BD%E5%90%8D%E9%97%AE%E9%A2%98"><span class="nav-text">4. Hexo 初始化时的命名问题</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-Hexo-%E4%B8%BB%E9%A2%98%E9%85%8D%E7%BD%AE"><span class="nav-text">5. Hexo 主题配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#6-%E5%85%B3%E4%BA%8E-Netlify-%E7%9A%84%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C-%E4%B8%8D%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8"><span class="nav-text">6. 关于 Netlify 的使用体验(不推荐使用)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E9%83%A8%E7%BD%B2%E6%AD%A5%E9%AA%A4"><span class="nav-text">手动部署步骤</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Netlify-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9"><span class="nav-text">Netlify 的优缺点</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#7-%E9%98%85%E8%AF%BB%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E7%9A%84%E9%87%8D%E8%A6%81%E6%80%A7"><span class="nav-text">7. 阅读官方文档的重要性</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%98%E6%96%B9%E6%96%87%E6%A1%A3%E9%98%85%E8%AF%BB%E5%BB%BA%E8%AE%AE"><span class="nav-text">官方文档阅读建议</span></a></li></ol></li></ol>
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Disruptor-%E4%B8%8E%E5%85%B6%E4%BB%96%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%9B%B8%E6%AF%94%E7%9A%84%E4%BC%98%E5%8A%BF"><span class="nav-text">Disruptor 与其他无锁队列相比的优势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E3%80%81%E5%B8%B8%E8%A7%81%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%AE%80%E4%BB%8B"><span class="nav-text">一、常见无锁队列简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%8C%E3%80%81Disruptor-%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%93%B2%E5%AD%A6"><span class="nav-text">二、Disruptor 的设计哲学</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%89%E3%80%81Disruptor-%E7%9B%B8%E6%AF%94%E5%85%B6%E4%BB%96%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%E7%9A%84%E6%A0%B8%E5%BF%83%E4%BC%98%E5%8A%BF"><span class="nav-text">三、Disruptor 相比其他无锁队列的核心优势</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#1-%E7%9C%9F%E6%AD%A3%E7%9A%84%E6%97%A0%E9%94%81%E8%AE%BE%E8%AE%A1"><span class="nav-text">1. 真正的无锁设计</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#2-%E9%A2%84%E5%88%86%E9%85%8D%E5%86%85%E5%AD%98-%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA"><span class="nav-text">2. 预分配内存 + 环形缓冲区</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#3-%E9%A1%BA%E5%BA%8F%E8%AE%BF%E9%97%AE-%E7%BC%93%E5%AD%98%E5%8F%8B%E5%A5%BD"><span class="nav-text">3. 顺序访问 + 缓存友好</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#4-%E6%94%AF%E6%8C%81%E5%A4%9A%E6%B6%88%E8%B4%B9%E8%80%85%E5%B9%B6%E8%A1%8C%E6%B6%88%E8%B4%B9"><span class="nav-text">4. 支持多消费者并行消费</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#5-%E6%9B%B4%E9%AB%98%E7%9A%84%E5%90%9E%E5%90%90%E9%87%8F%E4%B8%8E%E6%9B%B4%E4%BD%8E%E7%9A%84%E5%BB%B6%E8%BF%9F"><span class="nav-text">5. 更高的吞吐量与更低的延迟</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9B%9B%E3%80%81%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E5%AF%B9%E6%AF%94%E6%80%BB%E7%BB%93"><span class="nav-text">四、适用场景对比总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E3%80%81%E5%B0%8F%E7%BB%93"><span class="nav-text">五、小结</span></a></li></ol></li></ol>
     </div>
 </div>
 

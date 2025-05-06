@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="keywords" content="Hexo Theme Keep">
+    <meta name="description" content="Hexo Theme Keep">
+    <meta name="author" content="NIJIANBING233">
+    
+    <title>
+        
+            Disruptor 无锁队列：并发世界的“高效沟通大师” |
+        
+        WUHU233&#39;s Blog
+    </title>
+    
+<link rel="stylesheet" href="/css/style.css">
+
+    
+        <link rel="shortcut icon" href="/images/logo.png">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/font/css/fontawesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/font/css/regular.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/font/css/solid.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/font/css/brands.min.css">
+    
+    <script class="keep-theme-configurations">
+    const KEEP = window.KEEP || {}
+    KEEP.hexo_config = {"hostname":"wuhu233.site","root":"/","language":"zh-CN","path":"search.json"}
+    KEEP.theme_config = {"base_info":{"primary_color":"#1abc9c","title":"WUHU233's Blog","author":"NIJIANBING233","avatar":"/images/avatar.png","logo":"/images/logo.png","favicon":"/images/logo.png"},"menu":{"home":"/                        || fa-solid fa-home","archives":"/archives            || fa-solid fa-box-archive","about":"/about                  || fa-solid fa-user-graduate","Google":"https://www.google.com  || fa-brands fa-google"},"first_screen":{"enable":true,"background_img":"/images/bg.svg","background_img_dark":"/images/bg.svg","description":"Keep coding and Keep loving.","hitokoto":true},"social_contact":{"enable":true,"links":{"github":"https://github.com/Nijianbing233","email":"nijianbing233@outlook.com","git":"https://gitee.com/Nijianbing233"}},"scroll":{"progress_bar":false,"percent":false,"hide_header":true},"home":{"announcement":null,"category":true,"tag":true,"post_datetime":"updated"},"post":{"author_badge":{"enable":true,"level_badge":false,"custom_badge":["壹","贰","叁"]},"word_count":{"wordcount":true,"min2read":true},"datetime_format":"YYYY-MM-DD HH:mm:ss","copyright_info":false,"share":true,"reward":{"enable":false,"img_link":null,"text":null,"icon":null}},"code_block":{"tools":{"enable":true,"style":"mac"},"highlight_theme":"obsidian"},"toc":{"enable":true,"number":false,"expand_all":false,"init_open":true,"layout":"right"},"website_count":{"busuanzi_count":{"enable":true,"site_uv":true,"site_pv":true,"page_pv":true}},"local_search":{"enable":true,"preload":true},"comment":{"enable":true,"use":"valine","valine":{"appid":"O3vtN1zqpmWrLhKcP6MMnhNX-gzGzoHsz","appkey":"7bFPdUMLvJBJrODOTCg1a58d","server_urls":null,"placeholder":null},"gitalk":{"github_id":null,"github_admins":null,"repository":null,"client_id":null,"client_secret":null,"proxy":null},"twikoo":{"env_id":null,"region":null,"version":"1.6.39"},"waline":{"server_url":null,"reaction":false,"version":"3.3.2"},"giscus":{"repo":null,"repo_id":null,"category":"Announcements","category_id":null,"reactions_enabled":false},"artalk":{"server":null},"disqus":{"shortname":null}},"rss":{"enable":false},"lazyload":{"enable":false},"cdn":{"enable":true,"provider":"cdnjs"},"pjax":{"enable":false},"footer":{"since":2020,"word_count":true,"site_deploy":{"enable":true,"provider":"github","url":"https://github.com"},"record":{"enable":false,"list":[{"code":null,"link":null}]}},"inject":{"enable":false,"css":[null],"js":[null]},"root":"","source_data":{},"version":"4.2.5"}
+    KEEP.language_ago = {"second":"%s 秒前","minute":"%s 分钟前","hour":"%s 小时前","day":"%s 天前","week":"%s 周前","month":"%s 个月前","year":"%s 年前"}
+    KEEP.language_code_block = {"copy":"复制代码","copied":"已复制","fold":"折叠代码块","folded":"已折叠"}
+    KEEP.language_copy_copyright = {"copy":"复制版权信息","copied":"已复制","title":"原文标题","author":"原文作者","link":"原文链接"}
+  </script>
+<meta name="generator" content="Hexo 7.3.0"></head>
+
+
+<body>
+<div class="progress-bar-container">
+    
+
+    
+</div>
+
+
+
+<main class="page-container border-box">
+    <!-- home first screen  -->
+    
+
+    <!-- page content -->
+    <div class="page-main-content border-box">
+        <div class="page-main-content-top">
+            
+<header class="header-wrapper">
+
+    <div class="border-box header-content">
+        <div class="left flex-start border-box">
+            
+                <a class="logo-image border-box" href="/">
+                    <img src="/images/logo.png">
+                </a>
+            
+            <a class="site-name border-box" href="/">
+               WUHU233&#39;s Blog
+            </a>
+        </div>
+
+        <div class="right border-box">
+            <div class="pc border-box">
+                <ul class="menu-list border-box">
+                    
+                        
+                        <li class="menu-item flex-start border-box">
+                            <a class="menu-text-color border-box" href="/">
+                                
+                                    <i class="menu-text-color menu-icon fa-solid fa-home"></i>
+                                
+                                首页
+                                
+                            </a>
+                            
+                        </li>
+                    
+                        
+                        <li class="menu-item flex-start border-box">
+                            <a class="menu-text-color border-box" href="/archives">
+                                
+                                    <i class="menu-text-color menu-icon fa-solid fa-box-archive"></i>
+                                
+                                归档
+                                
+                            </a>
+                            
+                        </li>
+                    
+                        
+                        <li class="menu-item flex-start border-box">
+                            <a class="menu-text-color border-box" href="/about">
+                                
+                                    <i class="menu-text-color menu-icon fa-solid fa-user-graduate"></i>
+                                
+                                关于
+                                
+                            </a>
+                            
+                        </li>
+                    
+                        
+                        <li class="menu-item flex-start border-box">
+                            <a class="menu-text-color border-box" target="_blank" rel="noopener" href="https://www.google.com">
+                                
+                                    <i class="menu-text-color menu-icon fa-brands fa-google"></i>
+                                
+                                谷歌
+                                
+                            </a>
+                            
+                        </li>
+                    
+                    
+                        <li class="menu-item search search-popup-trigger">
+                            <i class="menu-text-color fas search fa-search"></i>
+                        </li>
+                    
+                </ul>
+            </div>
+            <div class="mobile border-box flex-start">
+                
+                    <div class="icon-item search search-popup-trigger"><i class="fas fa-search"></i></div>
+                
+                <div class="icon-item menu-bar">
+                    <div class="menu-bar-middle"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-drawer">
+        <ul class="drawer-menu-list border-box">
+            
+                
+                <li class="drawer-menu-item border-box not-sub-menu">
+                    <label class="drawer-menu-label border-box">
+                        <a class="drawer-menu-text-color left-side flex-start border-box" href="/">
+                            
+                                <span class="menu-icon-wrap border-box flex-center">
+                                    <i class="drawer-menu-text-color menu-icon fa-solid fa-home"></i>
+                                </span>
+                            
+                            首页
+                        </a>
+                        
+                    </label>
+                    
+                </li>
+            
+                
+                <li class="drawer-menu-item border-box not-sub-menu">
+                    <label class="drawer-menu-label border-box">
+                        <a class="drawer-menu-text-color left-side flex-start border-box" href="/archives">
+                            
+                                <span class="menu-icon-wrap border-box flex-center">
+                                    <i class="drawer-menu-text-color menu-icon fa-solid fa-box-archive"></i>
+                                </span>
+                            
+                            归档
+                        </a>
+                        
+                    </label>
+                    
+                </li>
+            
+                
+                <li class="drawer-menu-item border-box not-sub-menu">
+                    <label class="drawer-menu-label border-box">
+                        <a class="drawer-menu-text-color left-side flex-start border-box" href="/about">
+                            
+                                <span class="menu-icon-wrap border-box flex-center">
+                                    <i class="drawer-menu-text-color menu-icon fa-solid fa-user-graduate"></i>
+                                </span>
+                            
+                            关于
+                        </a>
+                        
+                    </label>
+                    
+                </li>
+            
+                
+                <li class="drawer-menu-item border-box not-sub-menu">
+                    <label class="drawer-menu-label border-box">
+                        <a class="drawer-menu-text-color left-side flex-start border-box" target="_blank" rel="noopener" href="https://www.google.com">
+                            
+                                <span class="menu-icon-wrap border-box flex-center">
+                                    <i class="drawer-menu-text-color menu-icon fa-brands fa-google"></i>
+                                </span>
+                            
+                            谷歌
+                        </a>
+                        
+                    </label>
+                    
+                </li>
+            
+        </ul>
+    </div>
+
+    <div class="window-mask"></div>
+
+</header>
+
+
+        </div>
+
+        <div class="page-main-content-middle border-box">
+
+            <div class="main-content border-box">
+                
+
+                    
+<div class="fade-in-down-animation">
+    <div class="post-page-container border-box">
+        <div class="post-content-container border-box">
+            
+
+            <div class="post-content-bottom border-box">
+                
+                    <div class="post-title">
+                        Disruptor 无锁队列：并发世界的“高效沟通大师”
+                    </div>
+                
+
+                
+                    <div class="post-header border-box">
+                        
+                            <div class="avatar-box border-box">
+                                <img src="/images/avatar.png">
+                            </div>
+                        
+                        <div class="info-box">
+                            <div class="author border-box">
+                                <span class="name">NIJIANBING233</span>
+                                
+                                    <span class="author-badge">壹</span>
+                                
+                            </div>
+                            <div class="meta-info border-box">
+                                
+
+<div class="post-meta-info-container border-box post">
+    <div class="post-meta-info border-box">
+        
+
+        
+            <span class="meta-info-item post-create-date">
+                <i class="icon fa-solid fa-calendar-plus"></i>&nbsp;
+                <span class="datetime">2025-03-08 14:10:34</span>
+            </span>
+
+            
+                <span class="meta-info-item post-update-date">
+                    <i class="icon fa-solid fa-file-pen"></i>&nbsp;
+                    <span class="datetime" data-updated="Sat Mar 08 2025 14:10:34 GMT+0800">2025-03-08 14:10:34</span>
+                </span>
+            
+        
+
+        
+
+        
+            <span class="post-tag meta-info-item border-box">
+                <ul class="post-tag-ul">
+                    
+                            <li class="tag-item"><span class="tag-separator"><i class="icon fas fa-hashtag"></i></span><a href="/tags/java/">java</a></li>
+                        
+                    
+                </ul>
+            </span>
+        
+
+        
+        
+            <span class="meta-info-item post-wordcount">
+                <i class="icon fas fa-file-word"></i>&nbsp;<span>1.7k 字</span>
+            </span>
+        
+        
+            <span class="meta-info-item post-min2read">
+                <i class="icon fas fa-clock"></i>&nbsp;<span>6 分钟</span>
+            </span>
+        
+        
+            <span class="meta-info-item post-pv">
+                <i class="icon fas fa-eye"></i>&nbsp;<span id="busuanzi_value_page_pv"></span>
+            </span>
+        
+    </div>
+
+    
+</div>
+
+                            </div>
+                        </div>
+                    </div>
+                
+
+                <div class="post-content keep-markdown-body ">
+                    
+
+                    
+                         <h1 id="Disruptor-无锁队列：并发世界的“高效沟通大师”💬"><a href="#Disruptor-无锁队列：并发世界的“高效沟通大师”💬" class="headerlink" title="Disruptor 无锁队列：并发世界的“高效沟通大师”💬"></a>Disruptor 无锁队列：并发世界的“高效沟通大师”💬</h1><p>在高并发的世界里，线程们就像一群忙碌的快递员，他们需要频繁地传递信息、处理任务。而这些信息和任务，通常被放在一个叫做 <strong>队列（Queue）</strong> 的地方。传统的队列，比如 <code>BlockingQueue</code>，虽然能完成基本的工作，但在面对海量请求时，常常显得力不从心。</p>
+<p>于是，一位名叫 <strong>Disruptor 无锁队列</strong> 的新成员闪亮登场了。它不是那种靠加锁来维持秩序的老派角色，而是以一种优雅又高效的方式，让多个线程之间实现了“默契配合”的艺术。今天，我们就来认识一下这位并发世界中的“沟通大师”。</p>
+<hr>
+<h2 id="🌟-一、Disruptor-是谁？他有什么特别？"><a href="#🌟-一、Disruptor-是谁？他有什么特别？" class="headerlink" title="🌟 一、Disruptor 是谁？他有什么特别？"></a>🌟 一、Disruptor 是谁？他有什么特别？</h2><p>Disruptor 是由英国金融公司 LMAX 开发的一种高性能事件处理框架，其核心是一个基于 <strong>环形缓冲区（Ring Buffer）</strong> 的无锁队列结构。它的设计目标是实现 <strong>低延迟、高吞吐量</strong> 的并发处理能力。</p>
+<blockquote>
+<p>简单来说，Disruptor 就像是一个没有红绿灯却依旧井然有序的十字路口，所有车辆（线程）都能快速通过而不发生碰撞。</p>
+</blockquote>
+<h3 id="🔑-它的关键特点："><a href="#🔑-它的关键特点：" class="headerlink" title="🔑 它的关键特点："></a>🔑 它的关键特点：</h3><ul>
+<li>✅ <strong>无锁设计</strong>：使用 CAS（Compare and Swap）操作代替传统锁机制，避免线程阻塞。</li>
+<li>✅ <strong>预分配内存</strong>：环形缓冲区在初始化时就分配好固定大小的内存空间，避免频繁 GC。</li>
+<li>✅ <strong>顺序访问</strong>：数据按顺序写入和读取，提高 CPU 缓存命中率。</li>
+<li>✅ <strong>多消费者支持</strong>：可以配置多个消费者线程并行消费消息，提升整体性能。</li>
+</ul>
+<hr>
+<h2 id="🎯-二、为什么我们需要无锁队列？"><a href="#🎯-二、为什么我们需要无锁队列？" class="headerlink" title="🎯 二、为什么我们需要无锁队列？"></a>🎯 二、为什么我们需要无锁队列？</h2><p>在并发编程中，最让人头疼的问题之一就是线程之间的竞争。当多个线程同时尝试修改共享资源时，如果不加以控制，就会出现数据混乱、死锁等问题。传统的解决方案是加锁，但加锁意味着排队等待，效率低下。</p>
+<p>而 Disruptor 使用了一种叫 <strong>CAS + volatile 变量</strong> 的方式来实现线程安全，不需要阻塞线程，也不需要上下文切换，从而大大提高了系统的响应速度和吞吐能力。</p>
+<blockquote>
+<p>如果说传统队列是公交车站——大家排队上车，那 Disruptor 就是高速公路——你追我赶，互不干扰。</p>
+</blockquote>
+<hr>
+<h2 id="🧠-三、Disruptor-的工作原理：一场有组织的信息接力赛"><a href="#🧠-三、Disruptor-的工作原理：一场有组织的信息接力赛" class="headerlink" title="🧠 三、Disruptor 的工作原理：一场有组织的信息接力赛"></a>🧠 三、Disruptor 的工作原理：一场有组织的信息接力赛</h2><p>想象一下，Disruptor 就像是一场精心安排的信息接力赛，每个参与者都有自己的职责和节奏。</p>
+<h3 id="🏁-1-环形缓冲区（Ring-Buffer）"><a href="#🏁-1-环形缓冲区（Ring-Buffer）" class="headerlink" title="🏁 1. 环形缓冲区（Ring Buffer）"></a>🏁 1. 环形缓冲区（Ring Buffer）</h3><p>Disruptor 的核心结构是一个 <strong>固定大小的环形数组</strong>，称为 Ring Buffer。这个缓冲区就像是一个跑道，生产者往里面放数据，消费者从里面拿数据。</p>
+<ul>
+<li>每个位置只能存放一个事件对象。</li>
+<li>所有位置在初始化时就已经分配好内存，不会动态扩容。</li>
+<li>当指针走到末尾时会自动绕回到起点，形成“环”。</li>
+</ul>
+<h3 id="🧍‍♂️-2-生产者（Producer）"><a href="#🧍‍♂️-2-生产者（Producer）" class="headerlink" title="🧍‍♂️ 2. 生产者（Producer）"></a>🧍‍♂️ 2. 生产者（Producer）</h3><p>生产者负责向 Ring Buffer 中发布事件。它可以是一个或多个线程，通过 CAS 操作确保每次只有一位生产者能够成功写入某个位置。</p>
+<blockquote>
+<p>生产者就像是传送带上的工人，不断把包裹放进箱子（缓冲区），然后交给下一个人处理。</p>
+</blockquote>
+<h3 id="👨‍💻-3-消费者（Consumer）"><a href="#👨‍💻-3-消费者（Consumer）" class="headerlink" title="👨‍💻 3. 消费者（Consumer）"></a>👨‍💻 3. 消费者（Consumer）</h3><p>消费者则从 Ring Buffer 中取出事件进行处理。Disruptor 支持多个消费者并行消费，也可以设置依赖关系，例如 A 处理完后 B 再处理。</p>
+<blockquote>
+<p>消费者就像是流水线上的工程师，每个人专注于自己的工序，相互协作完成最终的产品。</p>
+</blockquote>
+<h3 id="🚦-4-序号协调器（Sequence-Barrier）"><a href="#🚦-4-序号协调器（Sequence-Barrier）" class="headerlink" title="🚦 4. 序号协调器（Sequence Barrier）"></a>🚦 4. 序号协调器（Sequence Barrier）</h3><p>Disruptor 使用序号（Sequence）来追踪每个位置的状态。消费者通过 Sequence 来判断当前是否可以读取该位置的数据，而生产者则通过检查消费者的进度来决定是否可以覆盖旧数据。</p>
+<blockquote>
+<p>Sequence Barriers 就像是交通信号灯，告诉各个线程：“你可以走了”，“请等一下”。</p>
+</blockquote>
+<hr>
+<h2 id="💡-四、举个栗子：用-Disruptor-实现日志处理系统"><a href="#💡-四、举个栗子：用-Disruptor-实现日志处理系统" class="headerlink" title="💡 四、举个栗子：用 Disruptor 实现日志处理系统"></a>💡 四、举个栗子：用 Disruptor 实现日志处理系统</h2><p>让我们来看一个简单的例子：使用 Disruptor 构建一个高效的日志处理系统。</p>
+<h3 id="🧾-场景描述"><a href="#🧾-场景描述" class="headerlink" title="🧾 场景描述"></a>🧾 场景描述</h3><p>我们有一个日志生产者不断生成日志事件，两个消费者分别负责将日志写入数据库和发送到监控平台。</p>
+<h3 id="📦-1-定义事件类"><a href="#📦-1-定义事件类" class="headerlink" title="📦 1. 定义事件类"></a>📦 1. 定义事件类</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogEvent</span> &#123;</span><br><span class="line">    <span class="keyword">private</span> String message;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">setMessage</span><span class="params">(String message)</span> &#123;</span><br><span class="line">        <span class="built_in">this</span>.message = message;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> String <span class="title function_">getMessage</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> message;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="🧩-2-定义事件工厂"><a href="#🧩-2-定义事件工厂" class="headerlink" title="🧩 2. 定义事件工厂"></a>🧩 2. 定义事件工厂</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">LogEventFactory</span> <span class="keyword">implements</span> <span class="title class_">EventFactory</span>&lt;LogEvent&gt; &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> LogEvent <span class="title function_">newInstance</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">LogEvent</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="📣-3-定义消费者处理器"><a href="#📣-3-定义消费者处理器" class="headerlink" title="📣 3. 定义消费者处理器"></a>📣 3. 定义消费者处理器</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DatabaseLoggerHandler</span> <span class="keyword">implements</span> <span class="title class_">EventHandler</span>&lt;LogEvent&gt; &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onEvent</span><span class="params">(LogEvent event, <span class="type">long</span> sequence, <span class="type">boolean</span> endOfBatch)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;DatabaseLogger: &quot;</span> + event.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">MonitorLoggerHandler</span> <span class="keyword">implements</span> <span class="title class_">EventHandler</span>&lt;LogEvent&gt; &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">onEvent</span><span class="params">(LogEvent event, <span class="type">long</span> sequence, <span class="type">boolean</span> endOfBatch)</span> &#123;</span><br><span class="line">        System.out.println(<span class="string">&quot;MonitorLogger: &quot;</span> + event.getMessage());</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="🚀-4-主程序启动-Disruptor"><a href="#🚀-4-主程序启动-Disruptor" class="headerlink" title="🚀 4. 主程序启动 Disruptor"></a>🚀 4. 主程序启动 Disruptor</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">DisruptorDemo</span> &#123;</span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">        <span class="type">int</span> <span class="variable">bufferSize</span> <span class="operator">=</span> <span class="number">1024</span>; <span class="comment">// 环形缓冲区大小</span></span><br><span class="line"></span><br><span class="line">        Disruptor&lt;LogEvent&gt; disruptor = <span class="keyword">new</span> <span class="title class_">Disruptor</span>&lt;&gt;(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">LogEventFactory</span>(),</span><br><span class="line">            bufferSize,</span><br><span class="line">            DaemonThreadFactory.INSTANCE</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 注册两个消费者</span></span><br><span class="line">        disruptor.handleEventsWith(</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">DatabaseLoggerHandler</span>(),</span><br><span class="line">            <span class="keyword">new</span> <span class="title class_">MonitorLoggerHandler</span>()</span><br><span class="line">        );</span><br><span class="line"></span><br><span class="line">        disruptor.start(); <span class="comment">// 启动 Disruptor</span></span><br><span class="line"></span><br><span class="line">        RingBuffer&lt;LogEvent&gt; ringBuffer = disruptor.getRingBuffer();</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 模拟生产者不断发送日志</span></span><br><span class="line">        <span class="keyword">for</span> (<span class="type">int</span> <span class="variable">i</span> <span class="operator">=</span> <span class="number">0</span>; i &lt; <span class="number">10</span>; i++) &#123;</span><br><span class="line">            <span class="type">long</span> <span class="variable">seq</span> <span class="operator">=</span> ringBuffer.next(); <span class="comment">// 获取下一个可用位置</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="type">LogEvent</span> <span class="variable">event</span> <span class="operator">=</span> ringBuffer.get(seq);</span><br><span class="line">                event.setMessage(<span class="string">&quot;Log Message &quot;</span> + i);</span><br><span class="line">            &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">                ringBuffer.publish(seq); <span class="comment">// 发布事件</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        Thread.sleep(<span class="number">2000</span>);</span><br><span class="line">        disruptor.shutdown(); <span class="comment">// 关闭 Disruptor</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="🧭-五、适用场景与不适用场景"><a href="#🧭-五、适用场景与不适用场景" class="headerlink" title="🧭 五、适用场景与不适用场景"></a>🧭 五、适用场景与不适用场景</h2><h3 id="✅-适用场景"><a href="#✅-适用场景" class="headerlink" title="✅ 适用场景"></a>✅ 适用场景</h3><ul>
+<li>高频交易系统</li>
+<li>实时日志处理</li>
+<li>游戏服务器的消息队列</li>
+<li>数据采集与分析系统</li>
+</ul>
+<h3 id="❌-不适合的场景"><a href="#❌-不适合的场景" class="headerlink" title="❌ 不适合的场景"></a>❌ 不适合的场景</h3><ul>
+<li>需要动态扩容的队列</li>
+<li>消息持久化需求强烈</li>
+<li>消息顺序要求不严格（Disruptor 强调顺序性）</li>
+<li>对内存占用非常敏感的嵌入式环境</li>
+</ul>
+<hr>
+<h2 id="🧵-六、总结：Disruptor-——-并发世界的“沟通艺术家”"><a href="#🧵-六、总结：Disruptor-——-并发世界的“沟通艺术家”" class="headerlink" title="🧵 六、总结：Disruptor —— 并发世界的“沟通艺术家”"></a>🧵 六、总结：Disruptor —— 并发世界的“沟通艺术家”</h2><p>如果说 Java 原生的并发工具包是一位严谨的工程师，那么 Disruptor 就是一位充满创造力的艺术家。它不仅解决了并发通信的基本问题，更以一种优雅且高效的方式，让线程之间的协作变得流畅自然。</p>
+<blockquote>
+<p>在 Disruptor 的世界里，没有锁的束缚，只有默契的节奏；没有无谓的等待，只有飞快的流转。</p>
+</blockquote>
+<p>如果你正在构建一个对性能、延迟、吞吐量有着极致追求的系统，那么 Disruptor 绝对值得你深入了解和尝试</p>
+
+                    
+                </div>
+
+                
+
+                <div class="post-bottom-tags-and-share border-box">
+                    <div>
+                        
+                            <ul class="post-tags-box border-box">
+                                
+                                    <li class="tag-item border-box">
+                                        <i class="icon fas fa-hashtag"></i>&nbsp;<a href="/tags/java/">java</a>
+                                    </li>
+                                
+                            </ul>
+                        
+                    </div>
+                    <div>
+                        
+                            <div class="post-share-container border-box">
+    <ul class="share-list-wrap border-box">
+        <li class="qq share-item border-box flex-center tooltip"
+            data-tooltip-content="分享到 QQ"
+        >
+            <i class="fa-brands fa-qq"></i>
+        </li>
+        <li class="wechat share-item border-box flex-center tooltip tooltip-img"
+            data-tooltip-content="分享到微信"
+            data-tooltip-img-tip="微信扫一扫"
+            data-tooltip-img-style="background-color: #fff; top: -10px; padding: 0.6rem 0.6rem 0.1rem 0.6rem;"
+        >
+            <i class="fa-brands fa-weixin"></i>
+        </li>
+        <li class="weibo share-item border-box flex-center tooltip"
+            data-tooltip-content="分享到微博"
+        >
+            <i class="fa-brands fa-weibo"></i>
+        </li>
+    </ul>
+</div>
+
+                        
+                    </div>
+                </div>
+
+                
+
+                
+                    <div class="post-nav border-box">
+                        
+                            <div class="prev-post">
+                                <a class="prev"
+                                   rel="prev"
+                                   href="/2025/03/08/f7f452b4a772/"
+                                   title="Disruptor 与其他无锁队列相比的优势"
+                                >
+                                    <span class="left arrow-icon flex-center">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </span>
+                                    <span class="title flex-center">
+                                        <span class="post-nav-title-item text-ellipsis">Disruptor 与其他无锁队列相比的优势</span>
+                                        <span class="post-nav-item">上一篇</span>
+                                    </span>
+                                </a>
+                            </div>
+                        
+                        
+                            <div class="next-post">
+                                <a class="next"
+                                   rel="next"
+                                   href="/2025/03/06/194f6723e95f/"
+                                   title="权限握手拦截器与编辑锁机制：深入理解与实践"
+                                >
+                                    <span class="title flex-center">
+                                        <span class="post-nav-title-item text-ellipsis">权限握手拦截器与编辑锁机制：深入理解与实践</span>
+                                        <span class="post-nav-item">下一篇</span>
+                                    </span>
+                                    <span class="right arrow-icon flex-center">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </span>
+                                </a>
+                            </div>
+                        
+                    </div>
+                
+
+                
+                    
+
+
+    <div class="comments-container border-box">
+        <div id="comments-anchor" class="comment-area-title border-box">
+            <i class="fas fa-comments"></i>&nbsp;评论
+        </div>
+        <div class="comment-plugin-fail border-box">
+    <span class="fail-tip">评论插件加载失败</span>
+    <button class="reload keep-button">点击重新加载</button>
+</div>
+<div class="comment-plugin-loading flex-center border-box">
+    <i class="loading-icon fa-solid fa-spinner fa-spin"></i>
+    <span class="load-tip">正在加载评论插件</span>
+</div>
+<script data-pjax>
+  window.KeepCommentPlugin = {}
+  window.KeepCommentPlugin.hideLoading = () => {
+    const cplDom = document.querySelector('.comments-container .comment-plugin-loading')
+    cplDom.style.display = 'none'
+  }
+  window.KeepCommentPlugin.loadFailHandle = () => {
+    window.KeepCommentPlugin.hideLoading()
+    const cpfDom = document.querySelector('.comments-container .comment-plugin-fail')
+    cpfDom.style.display = 'flex'
+    cpfDom.querySelector('.reload').addEventListener('click', () => {
+      window.location.reload()
+    })
+  }
+</script>
+
+        
+            
+
+    <div class="valine-container">
+        <div id="vcomments"></div>
+        <script 
+                src="//cdn.jsdelivr.net/npm/valine@latest/dist/Valine.min.js"
+                async
+                onerror="window.KeepCommentPlugin.loadFailHandle()"
+        ></script>
+        <script 
+                async
+                onerror="window.KeepCommentPlugin.loadFailHandle()"
+        >
+          window.KeepCommentPlugin.initValine = () => {
+            const config = {
+              el: '#vcomments',
+              appId: 'O3vtN1zqpmWrLhKcP6MMnhNX-gzGzoHsz',
+              appKey: '7bFPdUMLvJBJrODOTCg1a58d',
+              meta: ['nick', 'mail', 'link'],
+              avatar: 'wavatar',
+              enableQQ: true,
+              placeholder: '',
+              lang: 'zh-CN'.toLowerCase()
+            }
+
+            if ('') {
+              config.serverURLs = ''
+            }
+
+            if (window?.Valine) {
+              new Valine(config)
+              window.KeepCommentPlugin.hideLoading()
+            } else {
+              setTimeout(() => {
+                window.KeepCommentPlugin.initValine()
+              }, 1000)
+            }
+          }
+
+          if ('false' === 'true') {
+            setTimeout(() => {
+              window.KeepCommentPlugin.initValine()
+            }, 1200)
+          } else {
+            window.addEventListener('DOMContentLoaded', window.KeepCommentPlugin.initValine)
+          }
+        </script>
+    </div>
+
+
+        
+    </div>
+
+
+
+
+
+                
+            </div>
+        </div>
+
+        
+            <div class="pc-post-toc right-toc">
+                <div class="post-toc-wrap border-box">
+    <div class="post-toc border-box">
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Disruptor-%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%EF%BC%9A%E5%B9%B6%E5%8F%91%E4%B8%96%E7%95%8C%E7%9A%84%E2%80%9C%E9%AB%98%E6%95%88%E6%B2%9F%E9%80%9A%E5%A4%A7%E5%B8%88%E2%80%9D%F0%9F%92%AC"><span class="nav-text">Disruptor 无锁队列：并发世界的“高效沟通大师”💬</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8C%9F-%E4%B8%80%E3%80%81Disruptor-%E6%98%AF%E8%B0%81%EF%BC%9F%E4%BB%96%E6%9C%89%E4%BB%80%E4%B9%88%E7%89%B9%E5%88%AB%EF%BC%9F"><span class="nav-text">🌟 一、Disruptor 是谁？他有什么特别？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%94%91-%E5%AE%83%E7%9A%84%E5%85%B3%E9%94%AE%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="nav-text">🔑 它的关键特点：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8E%AF-%E4%BA%8C%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%EF%BC%9F"><span class="nav-text">🎯 二、为什么我们需要无锁队列？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%A0-%E4%B8%89%E3%80%81Disruptor-%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%EF%BC%9A%E4%B8%80%E5%9C%BA%E6%9C%89%E7%BB%84%E7%BB%87%E7%9A%84%E4%BF%A1%E6%81%AF%E6%8E%A5%E5%8A%9B%E8%B5%9B"><span class="nav-text">🧠 三、Disruptor 的工作原理：一场有组织的信息接力赛</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%81-1-%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA%EF%BC%88Ring-Buffer%EF%BC%89"><span class="nav-text">🏁 1. 环形缓冲区（Ring Buffer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%8D%E2%80%8D%E2%99%82%EF%B8%8F-2-%E7%94%9F%E4%BA%A7%E8%80%85%EF%BC%88Producer%EF%BC%89"><span class="nav-text">🧍‍♂️ 2. 生产者（Producer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB-3-%E6%B6%88%E8%B4%B9%E8%80%85%EF%BC%88Consumer%EF%BC%89"><span class="nav-text">👨‍💻 3. 消费者（Consumer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%9A%A6-4-%E5%BA%8F%E5%8F%B7%E5%8D%8F%E8%B0%83%E5%99%A8%EF%BC%88Sequence-Barrier%EF%BC%89"><span class="nav-text">🚦 4. 序号协调器（Sequence Barrier）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%A1-%E5%9B%9B%E3%80%81%E4%B8%BE%E4%B8%AA%E6%A0%97%E5%AD%90%EF%BC%9A%E7%94%A8-Disruptor-%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="nav-text">💡 四、举个栗子：用 Disruptor 实现日志处理系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%BE-%E5%9C%BA%E6%99%AF%E6%8F%8F%E8%BF%B0"><span class="nav-text">🧾 场景描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%A6-1-%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6%E7%B1%BB"><span class="nav-text">📦 1. 定义事件类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%A9-2-%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6%E5%B7%A5%E5%8E%82"><span class="nav-text">🧩 2. 定义事件工厂</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%A3-3-%E5%AE%9A%E4%B9%89%E6%B6%88%E8%B4%B9%E8%80%85%E5%A4%84%E7%90%86%E5%99%A8"><span class="nav-text">📣 3. 定义消费者处理器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%9A%80-4-%E4%B8%BB%E7%A8%8B%E5%BA%8F%E5%90%AF%E5%8A%A8-Disruptor"><span class="nav-text">🚀 4. 主程序启动 Disruptor</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%AD-%E4%BA%94%E3%80%81%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E4%B8%8E%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">🧭 五、适用场景与不适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9C%85-%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">✅ 适用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%8C-%E4%B8%8D%E9%80%82%E5%90%88%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="nav-text">❌ 不适合的场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%B5-%E5%85%AD%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9ADisruptor-%E2%80%94%E2%80%94-%E5%B9%B6%E5%8F%91%E4%B8%96%E7%95%8C%E7%9A%84%E2%80%9C%E6%B2%9F%E9%80%9A%E8%89%BA%E6%9C%AF%E5%AE%B6%E2%80%9D"><span class="nav-text">🧵 六、总结：Disruptor —— 并发世界的“沟通艺术家”</span></a></li></ol></li></ol>
+    </div>
+</div>
+
+            </div>
+        
+    </div>
+</div>
+
+
+                
+            </div>
+        </div>
+
+        <div class="page-main-content-bottom border-box">
+            
+<footer class="footer border-box">
+    <div class="copyright-info info-item">
+    &copy;&nbsp;<span>2020</span>&nbsp;-&nbsp;2025
+    
+            &nbsp;<i class="fas fa-heart icon-animate"></i>&nbsp;&nbsp;<a href="/">NIJIANBING233</a>
+        
+    </div>
+
+    <div class="theme-info info-item">
+        由&nbsp;<a target="_blank" href="https://hexo.io">Hexo</a>&nbsp;驱动&nbsp;&&nbsp;主题&nbsp;<a class="keep-version" target="_blank" href="https://github.com/XPoet/hexo-theme-keep">Keep</a>
+    </div>
+
+    
+        
+        <div class="deploy-info info-item">
+            
+                <a target="_blank" rel="nofollow" href="https://github.com">
+            
+            本站由 <span class="tooltip" data-tooltip-content="GitHub Pages"><img src="/images/brands/github.png"></span> 提供部署服务
+            
+                </a>
+            
+        </div>
+    
+
+    
+        <div class="count-info info-item">
+            
+                <span class="count-item border-box word">
+                    <span class="item-type border-box">总字数</span>
+                    <span class="item-value border-box word">7.6k</span>
+                </span>
+            
+
+            
+                <span class="count-item border-box uv">
+                    <span class="item-type border-box">访客数</span>
+                    <span class="item-value border-box uv" id="busuanzi_value_site_uv"></span>
+                </span>
+            
+
+            
+                <span class="count-item border-box pv">
+                    <span class="item-type border-box">访问量</span>
+                    <span class="item-value border-box pv" id="busuanzi_value_site_pv"></span>
+                </span>
+            
+        </div>
+    
+
+    
+</footer>
+
+        </div>
+    </div>
+
+    <!-- post tools -->
+    
+        <div class="post-tools right-toc">
+            <div class="post-tools-container border-box">
+    <ul class="post-tools-list border-box">
+        <!-- PC encrypt again -->
+        
+
+        <!-- PC TOC show toggle -->
+        
+            <li class="tools-item flex-center toggle-show-toc">
+                <i class="fas fa-list"></i>
+            </li>
+        
+
+        <!-- PC go comment -->
+        
+            <li class="tools-item flex-center go-to-comments">
+                <i class="fas fa-comment"></i>
+                <span class="post-comments-count"></span>
+            </li>
+        
+
+        <!-- PC full screen -->
+        <li class="tools-item flex-center full-screen">
+            <i class="fa-solid fa-expand"></i>
+        </li>
+    </ul>
+</div>
+
+        </div>
+    
+
+    <!-- side tools -->
+    <div class="side-tools">
+        <div class="side-tools-container border-box ">
+    <ul class="side-tools-list side-tools-show-handle border-box">
+        <li class="tools-item tool-font-adjust-plus flex-center">
+            <i class="fas fa-search-plus"></i>
+        </li>
+
+        <li class="tools-item tool-font-adjust-minus flex-center">
+            <i class="fas fa-search-minus"></i>
+        </li>
+
+        <!-- toggle mode -->
+        
+            <li class="tools-item tool-toggle-theme-mode flex-center">
+                <i class="fas fa-moon"></i>
+            </li>
+        
+
+        <!-- rss -->
+        
+
+        <!-- to bottom -->
+        <li class="tools-item tool-scroll-to-bottom flex-center">
+            <i class="fas fa-arrow-down"></i>
+        </li>
+    </ul>
+
+    <ul class="exposed-tools-list border-box">
+        
+            <li class="tools-item toggle-show-toc-tablet flex-center">
+                <i class="fas fa-list"></i>
+            </li>
+        
+
+        
+            <li class="tools-item go-to-comments-tablet flex-center">
+                <i class="fas fa-comment"></i>
+            </li>
+        
+
+        <li class="tools-item tool-toggle-show flex-center">
+            <i class="fas fa-cog fa-spin"></i>
+        </li>
+
+        <li class="tools-item tool-scroll-to-top flex-center show-arrow">
+            <i class="arrow fas fa-arrow-up"></i>
+            <span class="percent"></span>
+        </li>
+    </ul>
+</div>
+
+    </div>
+
+    <!-- image mask -->
+    <div class="zoom-in-image-mask">
+    <img class="zoom-in-image">
+</div>
+
+
+    <!-- local search -->
+    
+        <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+          <span class="search-input-field-pre">
+            <i class="fas fa-keyboard"></i>
+          </span>
+            <div class="search-input-container">
+                <input autocomplete="off"
+                       autocorrect="off"
+                       autocapitalize="off"
+                       placeholder="搜索..."
+                       spellcheck="false"
+                       type="search"
+                       class="search-input"
+                >
+            </div>
+            <span class="close-popup-btn">
+                <i class="fas fa-times"></i>
+            </span>
+        </div>
+        <div id="search-result">
+            <div id="no-result">
+                <i class="fas fa-spinner fa-pulse fa-5x fa-fw"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+    
+
+    <!-- tablet toc -->
+    
+        <div class="tablet-post-toc-mask">
+            <div class="tablet-post-toc">
+                <div class="post-toc-wrap border-box">
+    <div class="post-toc border-box">
+        <ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#Disruptor-%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%EF%BC%9A%E5%B9%B6%E5%8F%91%E4%B8%96%E7%95%8C%E7%9A%84%E2%80%9C%E9%AB%98%E6%95%88%E6%B2%9F%E9%80%9A%E5%A4%A7%E5%B8%88%E2%80%9D%F0%9F%92%AC"><span class="nav-text">Disruptor 无锁队列：并发世界的“高效沟通大师”💬</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8C%9F-%E4%B8%80%E3%80%81Disruptor-%E6%98%AF%E8%B0%81%EF%BC%9F%E4%BB%96%E6%9C%89%E4%BB%80%E4%B9%88%E7%89%B9%E5%88%AB%EF%BC%9F"><span class="nav-text">🌟 一、Disruptor 是谁？他有什么特别？</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%94%91-%E5%AE%83%E7%9A%84%E5%85%B3%E9%94%AE%E7%89%B9%E7%82%B9%EF%BC%9A"><span class="nav-text">🔑 它的关键特点：</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%8E%AF-%E4%BA%8C%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E9%9C%80%E8%A6%81%E6%97%A0%E9%94%81%E9%98%9F%E5%88%97%EF%BC%9F"><span class="nav-text">🎯 二、为什么我们需要无锁队列？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%A0-%E4%B8%89%E3%80%81Disruptor-%E7%9A%84%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86%EF%BC%9A%E4%B8%80%E5%9C%BA%E6%9C%89%E7%BB%84%E7%BB%87%E7%9A%84%E4%BF%A1%E6%81%AF%E6%8E%A5%E5%8A%9B%E8%B5%9B"><span class="nav-text">🧠 三、Disruptor 的工作原理：一场有组织的信息接力赛</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%8F%81-1-%E7%8E%AF%E5%BD%A2%E7%BC%93%E5%86%B2%E5%8C%BA%EF%BC%88Ring-Buffer%EF%BC%89"><span class="nav-text">🏁 1. 环形缓冲区（Ring Buffer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%8D%E2%80%8D%E2%99%82%EF%B8%8F-2-%E7%94%9F%E4%BA%A7%E8%80%85%EF%BC%88Producer%EF%BC%89"><span class="nav-text">🧍‍♂️ 2. 生产者（Producer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%91%A8%E2%80%8D%F0%9F%92%BB-3-%E6%B6%88%E8%B4%B9%E8%80%85%EF%BC%88Consumer%EF%BC%89"><span class="nav-text">👨‍💻 3. 消费者（Consumer）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%9A%A6-4-%E5%BA%8F%E5%8F%B7%E5%8D%8F%E8%B0%83%E5%99%A8%EF%BC%88Sequence-Barrier%EF%BC%89"><span class="nav-text">🚦 4. 序号协调器（Sequence Barrier）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%92%A1-%E5%9B%9B%E3%80%81%E4%B8%BE%E4%B8%AA%E6%A0%97%E5%AD%90%EF%BC%9A%E7%94%A8-Disruptor-%E5%AE%9E%E7%8E%B0%E6%97%A5%E5%BF%97%E5%A4%84%E7%90%86%E7%B3%BB%E7%BB%9F"><span class="nav-text">💡 四、举个栗子：用 Disruptor 实现日志处理系统</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%BE-%E5%9C%BA%E6%99%AF%E6%8F%8F%E8%BF%B0"><span class="nav-text">🧾 场景描述</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%A6-1-%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6%E7%B1%BB"><span class="nav-text">📦 1. 定义事件类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%A7%A9-2-%E5%AE%9A%E4%B9%89%E4%BA%8B%E4%BB%B6%E5%B7%A5%E5%8E%82"><span class="nav-text">🧩 2. 定义事件工厂</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%93%A3-3-%E5%AE%9A%E4%B9%89%E6%B6%88%E8%B4%B9%E8%80%85%E5%A4%84%E7%90%86%E5%99%A8"><span class="nav-text">📣 3. 定义消费者处理器</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%F0%9F%9A%80-4-%E4%B8%BB%E7%A8%8B%E5%BA%8F%E5%90%AF%E5%8A%A8-Disruptor"><span class="nav-text">🚀 4. 主程序启动 Disruptor</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%AD-%E4%BA%94%E3%80%81%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF%E4%B8%8E%E4%B8%8D%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">🧭 五、适用场景与不适用场景</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9C%85-%E9%80%82%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="nav-text">✅ 适用场景</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E2%9D%8C-%E4%B8%8D%E9%80%82%E5%90%88%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="nav-text">❌ 不适合的场景</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%F0%9F%A7%B5-%E5%85%AD%E3%80%81%E6%80%BB%E7%BB%93%EF%BC%9ADisruptor-%E2%80%94%E2%80%94-%E5%B9%B6%E5%8F%91%E4%B8%96%E7%95%8C%E7%9A%84%E2%80%9C%E6%B2%9F%E9%80%9A%E8%89%BA%E6%9C%AF%E5%AE%B6%E2%80%9D"><span class="nav-text">🧵 六、总结：Disruptor —— 并发世界的“沟通艺术家”</span></a></li></ol></li></ol>
+    </div>
+</div>
+
+            </div>
+        </div>
+    
+</main>
+
+
+
+
+
+<!-- common js -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/utils.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/header-shrink.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/back2top.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/toggle-theme.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/code-block.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/main.min.js"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/libs/anime.min.js"></script>
+
+<!-- local search -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/local-search.min.js"></script>
+
+
+<!-- lazyload -->
+
+
+<div class="">
+    <!-- home page -->
+    
+
+    <!-- post page -->
+    
+        <!-- post-helper -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/post/post-helper.min.js"></script>
+
+        <!-- toc -->
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/post/toc.min.js"></script>
+        
+
+        <!-- copyright-info -->
+        
+
+        <!-- share -->
+        
+            <script src="https://cdnjs.cloudflare.com/ajax/libs/hexo-theme-keep/4.2.5/js/post/share.min.js"></script>
+        
+    
+
+    <!-- categories page -->
+    
+
+    <!-- links page -->
+    
+
+    <!-- photos page -->
+    
+
+    <!-- tools page -->
+    
+</div>
+
+<!-- mermaid -->
+
+
+<!-- pjax -->
+
+
+
+</body>
+</html>
